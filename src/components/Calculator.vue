@@ -31,6 +31,16 @@
                 <label for="distance">Kms driven (per year)</label>
                 <input type="text" v-model="kmsDriven" placeholder="Enter kilometers">
             </div>
+
+            <div class="checkbox">
+              <input type="checkbox" id="supercharge" v-model="supercharge">
+              <label for="supercharge">I am using supercharger</label>
+            </div>
+            <div>
+                <label for="distance">Kms charged with supercharger</label>
+                <input type="text" v-model="kmsCharged" placeholder="Enter kilometers">
+            </div>
+
             <button @click.prevent="calculateCost">Calculate the Cost</button>
         </form>
     </div>
@@ -49,8 +59,10 @@ const selectedVariant = ref('');
 const selectedState = ref('');
 const chargingMethod = ref('');
 const kmsDriven = ref('');
+const kmsCharged = ref(''); // Add this line
 const totalEnergyCost = ref('');
 const showResult = ref(false);
+const supercharge = ref(false);
 
 
 //UI-RELATED 
@@ -116,16 +128,83 @@ const calculateTotalEnergyCost = () => {
   return null;
 };
 
+//FUNCTION TO CALCULATE MIXED COST
+
+// New variable to store adjusted kilometers for home charging
+const kmsHomeCharge = computed(() => {
+  const distance = parseFloat(kmsDriven.value);
+  const kmsChargedValue = parseFloat(kmsCharged.value);
+
+  if (!isNaN(distance) && !isNaN(kmsChargedValue)) {
+    return (distance - kmsChargedValue);
+  }
+
+  return null;
+});
+
+// Function to calculate supercharger cost
+const calculateSuperchargerCost = () => {
+  const superchargeCostArray = costOfSuperCharge.value;
+
+  if (Array.isArray(superchargeCostArray) && superchargeCostArray.length > 0) {
+    const superchargeCostPerKm = superchargeCostArray[0];
+    const kmsChargedValue = parseFloat(kmsCharged.value);
+
+    if (!isNaN(kmsChargedValue)) {
+      const superchargerCost = kmsChargedValue * superchargeCostPerKm;
+      return superchargerCost.toFixed(2);
+    }
+  }
+
+  return null;
+};
+// Function to calculate regular cost for the remaining distance
+const calculateRemainingRegularCost = () => {
+  const stateInfo = getStateInformation();
+
+  if (stateInfo && chargingMethod.value && selectedKmPerKWh.value && kmsHomeCharge.value) {
+    const energyCost = chargingMethod.value === 'solar'
+      ? stateInfo.minimumSolarTariff
+      : stateInfo.averageGridEnergyCost;
+
+    const kmPerKWh = selectedKmPerKWh.value;
+    const remainingDistance = parseFloat(kmsHomeCharge.value);
+
+    if (!isNaN(remainingDistance) && kmPerKWh !== 0) {
+      const cost = remainingDistance * (1 / kmPerKWh) * energyCost;
+      return isNaN(cost) ? null : cost.toFixed(2);
+    }
+  }
+
+  return null;
+};
+
+
 // Event handler for calculating the total energy cost
 const calculateCost = () => {
-  totalEnergyCost.value = calculateTotalEnergyCost();
-  if (totalEnergyCost.value){
-    showResult.value = true; 
+  if (supercharge.value) {
+    // If the checkbox is checked, calculate both regular and supercharger cost
+    const remainingRegularCost = calculateRemainingRegularCost();
+    const superchargerCost = calculateSuperchargerCost();
+
+    if (remainingRegularCost !== null && superchargerCost !== null) {
+      const totalEnergyCostValue = (parseFloat(remainingRegularCost) + parseFloat(superchargerCost)).toFixed(2);
+      totalEnergyCost.value = totalEnergyCostValue;
+    }
+  } else {
+    // If the checkbox is not checked, calculate only the regular total energy cost
+    totalEnergyCost.value = calculateTotalEnergyCost();
+  }
+
+  if (totalEnergyCost.value) {
+    showResult.value = true;
   }
 };
 
+
+
 // Add a watcher to reset result visibility when any form input changes
-watch([selectedMake, selectedModel, selectedVariant, selectedState, chargingMethod, kmsDriven], () => {
+watch([selectedMake, selectedModel, selectedVariant, selectedState, chargingMethod, kmsDriven, kmsCharged], () => {
   showResult.value = false;
 });
 
@@ -223,6 +302,10 @@ const states = ref([
         'Western Australia',
       ])
 
+const costOfSuperCharge = ref ([
+  0.69
+])
+
 
 //STATE INFORMATION
 const stateInformation = {
@@ -299,6 +382,9 @@ button:hover {
   padding-top: 1.5em;
   background-color: #ffffff;
   color: #087c7c;
+  text-align: center;
+}
+.checkbox{
   text-align: center;
 }
 
