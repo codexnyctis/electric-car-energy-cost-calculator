@@ -25,10 +25,9 @@ export default {
   data() {
     return {
       steps: [
-        { title: "Select Your Car", description: "Choose your electric car's make, model, and variant from our list." },
-        { title: "Choose Your Location", description: "Pick your state for accurate energy cost based on local electricity rates." },
-        { title: "Charging Method", description: "Decide between solar or power grid charging. Enter your cost per KWH." },
-        { title: 'Hit "Calculate"', description: "Hit 'Calculate' to see your projected annual energy cost instantly." },
+        { title: "Make Selections", description: "Choose your car, state, and charging method information" },
+        { title: 'Check the Result', description: "Result will be shown under the calculator."},
+        { title: "More", description: "Feel free to change the costs by entering new values."}
       ],
     };
   },
@@ -60,16 +59,16 @@ p {
 }
 
 .how-it-works {
-  margin-top: 40px;
+  margin-top: 10px;
   text-align: center;
 }
 
 .info-row {
   display: flex;
   justify-content: space-around;
-  margin-top: 1em;
+  margin-top: 0.5em;
   padding: 0 10px;
-  gap: 1.5em;
+  gap: 1.2em;
 }
 
 .info-block {
@@ -95,5 +94,11 @@ p {
 }
 .step-content h3 {
   white-space: nowrap;
+}
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 </style>
